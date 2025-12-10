@@ -1,8 +1,5 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from ingredients.models import Ingredient
-from ingredients.serializers import IngredientSerializer
-from django.conf import settings
 
 from .models import Recipe, RecipeIngredient, ShoppingCart, Favorite
 from .validators import (

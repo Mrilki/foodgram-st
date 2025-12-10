@@ -71,7 +71,7 @@ class Command(BaseCommand):
         
         if not final_path:
             self.stdout.write(
-                self.style.ERROR(f'Файл не найден ни по одному из путей:')
+                self.style.ERROR('Файл не найден ни по одному из путей:')
             )
             self.stdout.write(
                 self.style.WARNING(f'Текущая рабочая директория: {os.getcwd()}')
