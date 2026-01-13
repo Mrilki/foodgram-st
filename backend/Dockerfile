@@ -10,7 +10,4 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
-# Явно копируем файл ингредиентов, чтобы гарантировать его наличие
 COPY ingredients.csv /app/ingredients.csv
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "foodgram.wsgi"]

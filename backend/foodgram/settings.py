@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-!v2b*&gh@a3dv#plnr)nily8%@mn-(xcp@-teups977&qx%_e&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.68.113", "backend"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.68.113", "backend", "foodgram.loc", "alhost.ru"]
 
 
 # Application definition
@@ -138,7 +138,7 @@ AUTH_USER_MODEL = 'users.User'
 
 # Медиафайлы (для аватаров и изображений рецептов)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', BASE_DIR / 'media')
 
 # REST Framework настройки
 REST_FRAMEWORK = {

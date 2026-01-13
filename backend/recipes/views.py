@@ -1,11 +1,14 @@
 """Views для работы с рецептами."""
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from collections import defaultdict
+from celery.result import AsyncResult
+
+from .tasks import hello_task, fetch_random_meal, fetch_random_cocktail
 
 from .models import Recipe, ShoppingCart, Favorite
 from .serializers import (
@@ -49,6 +52,63 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Recipe.objects.select_related('author').prefetch_related(
             'recipe_ingredients__ingredient'
         )
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[AllowAny],
+        url_path='hello'
+    )
+    def hello(self, request):
+        """
+        Тестовый endpoint, который отправляет Celery-таск и возвращает task_id.
+        URL: /api/recipes/hello/
+        """
+        name = request.query_params.get('name', 'world')
+        result = hello_task.delay(name)
+        return Response(
+            {
+                'status': 'task sent',
+                'task_id': result.id,
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny], url_path='random-meal')
+    def random_meal(self, request):
+        """
+        endpoint для получения случайного блюда
+        URL: /api/recipes/random-meal/
+        """
+        result = fetch_random_meal.delay()
+        return Response(
+            {'status': 'task sent', 'task_id': result.id},
+            status=status.HTTP_202_ACCEPTED
+        )
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny], url_path='random-cocktail')
+    def random_cocktail(self, request):
+        """
+        endpoint для получения случайного коктейля
+        URL: /api/recipes/random-cocktail/
+        """
+        result = fetch_random_cocktail.delay()
+        return Response(
+            {'status': 'task sent', 'task_id': result.id},
+            status=status.HTTP_202_ACCEPTED
+        )
+
+    @action(detail=False, methods=['get'], url_path='task/(?P<task_id>[^/.]+)')
+    def get_task_result(self, request, task_id):
+        result = AsyncResult(task_id)
+        if result.ready():
+            return Response({
+                'status': 'completed',
+                'result': result.result
+            })
+        else:
+            return Response({
+                'status': 'pending'
+            }, status=status.HTTP_202_ACCEPTED)
 
     @action(
         detail=True,

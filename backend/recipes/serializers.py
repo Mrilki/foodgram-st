@@ -9,36 +9,6 @@ from .validators import (
 )
 
 
-def fix_media_url(url, request=None):
-    """Исправляет URL медиафайла, добавляя порт 8080 если его нет."""
-    if not url:
-        return url
-    
-    # Если URL уже абсолютный
-    if url.startswith('http://'):
-        # Заменяем localhost без порта или с другим портом на localhost:8080
-        import re
-        # Заменяем http://localhost/ или http://localhost:8000/ на http://localhost:8080/
-        url = re.sub(r'http://localhost(?!:8080)(?::\d+)?/', 'http://localhost:8080/', url)
-        # Заменяем http://127.0.0.1/ или http://127.0.0.1:8000/ на http://127.0.0.1:8080/
-        url = re.sub(r'http://127\.0\.0\.1(?!:8080)(?::\d+)?/', 'http://127.0.0.1:8080/', url)
-        return url
-    
-    # Если URL относительный, делаем его абсолютным с портом
-    if url.startswith('/media/'):
-        if request:
-            # Пытаемся использовать request, но исправляем порт
-            base_url = request.build_absolute_uri('/')
-            # Заменяем порт на 8080 если это localhost
-            import re
-            base_url = re.sub(r'http://localhost(?!:8080)(?::\d+)?', 'http://localhost:8080', base_url)
-            base_url = re.sub(r'http://127\.0\.0\.1(?!:8080)(?::\d+)?', 'http://127.0.0.1:8080', base_url)
-            return base_url.rstrip('/') + url
-        else:
-            return f'http://localhost:8080{url}'
-    
-    return url
-
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для ингредиента в рецепте."""
@@ -113,13 +83,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         return False
 
     def get_image(self, obj):
-        """Возвращает полный URL изображения."""
         if obj.image:
-            request = self.context.get('request')
-            if request:
-                url = request.build_absolute_uri(obj.image.url)
-                return fix_media_url(url, request)
-            return fix_media_url(obj.image.url)
+            return obj.image.url  # Например: "/media/recipes/abc123.png"
         return None
 
 
@@ -208,12 +173,7 @@ class RecipeMinifiedSerializer(serializers.ModelSerializer):
         )
 
     def get_image(self, obj):
-        """Возвращает полный URL изображения."""
         if obj.image:
-            request = self.context.get('request')
-            if request:
-                url = request.build_absolute_uri(obj.image.url)
-                return fix_media_url(url, request)
-            return fix_media_url(obj.image.url)
+            return obj.image.url
         return None
 
